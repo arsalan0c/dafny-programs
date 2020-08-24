@@ -1,2 +1,2 @@
-# dafny-exercises
-Exercises in the Dafny language
+# dafny-programs
+Programs in the Dafny language
