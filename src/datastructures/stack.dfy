@@ -6,6 +6,7 @@ class Node<T> {
         ensures this.data == data
     {
         this.data := data;
+        this.next := null;
     }
 }
 
@@ -14,7 +15,7 @@ class Stack<T> {
 
     method push(data: T)
         modifies this
-        ensures top != null
+        ensures fresh(top)
         ensures top.data == data
         ensures top.next == old(top)
     {
@@ -22,6 +23,8 @@ class Stack<T> {
         toAdd.next := top;
         // top.next := null; // correctly raises a verification error: may update object not in enclosing context's modifies clause
         top := toAdd;
+        
+        // top := null; // correctly raises a verification error: !fresh(top)
         // top.next := new Node(data); // correctly raises a verification error: top.next != old(top)
     } 
 
