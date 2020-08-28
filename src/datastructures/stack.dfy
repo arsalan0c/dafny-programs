@@ -4,6 +4,7 @@ class Node<T> {
 
     constructor (data: T)
         ensures this.data == data
+        ensures this.next == null;
     {
         this.data := data;
         this.next := null;
