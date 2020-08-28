@@ -49,8 +49,7 @@ class Stack<T> {
     }
 
     method isEmpty() returns (isEmpty: bool) 
-        ensures top == null ==> isEmpty
-        ensures top != null ==> !isEmpty
+        ensures top == null <==> isEmpty
     {
         if top == null {
             isEmpty := true;
