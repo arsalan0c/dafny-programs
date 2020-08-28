@@ -17,10 +17,12 @@ class Queue<T> {
 
     predicate Valid()
         reads this
+        reads first
         reads last
     {   
         first == null <==> last == null &&
-            last != null ==> last.next == null
+            last != null ==> last.next == null &&
+            first == null <==> sizeHelper(first) == 0
     }
 
     method enqueue(data: T)
@@ -64,6 +66,21 @@ class Queue<T> {
     {
         data := first.data;
     }
+
+       method size() returns (s: int)
+        requires Valid()
+        ensures s >= 0
+        ensures Valid()
+    {
+        s := sizeHelper(first);
+    }
+
+    // unable to prove termination
+    function method sizeHelper(node: Node?<T>): int
+        ensures sizeHelper(node) >= 0
+    {
+        if node == null then 0 else 1 + sizeHelper(node.next)
+    } 
 
     method isEmpty() returns (isEmpty: bool) 
         requires Valid()
