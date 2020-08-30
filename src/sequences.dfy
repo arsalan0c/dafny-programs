@@ -42,7 +42,6 @@ function Reverse<T>(a: seq<T>): seq<T>
 //   modifies a
 //   ensures a[..] == Reverse(old(a)[..])
 // {
-
 // }
 
 // squares all elements
@@ -51,6 +50,29 @@ function Square(a: seq<int>): seq<int>
   ensures forall k :: 0 <= k < |a| ==> Square(a)[k] == a[k] * a[k]
 {
   if |a| == 0 then [] else [a[0] * a[0]] + Square(a[1..])
+}
+
+
+method square_arr(a: array<int>) 
+  requires a.Length > 0
+  modifies a
+  ensures forall k :: 0 <= k < a.Length ==> a[k] == old(a[k]) * old(a[k])
+  ensures a.Length == old(a.Length)
+{
+  square_arr_helper(0, a);
+}
+
+method square_arr_helper(i: int, a: array<int>)
+  requires 0 <= i <= a.Length
+  decreases a.Length - i
+  modifies a
+  ensures a.Length == old(a.Length)
+  ensures forall k :: i <= k < a.Length ==> a[k] == old(a[k]) * old(a[k])
+{
+  if (i < a.Length) {
+    a[i] := a[i] * a[i];
+    square_arr_helper(i + 1, a);
+  }
 }
 
 method square(a: array<int>)
