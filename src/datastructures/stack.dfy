@@ -1,38 +1,87 @@
 class Node<T> {
     var next: Node?<T>
     var data: T
+    var len: int
+    ghost var Rep: set<object>
 
     constructor (data: T)
         ensures this.data == data
-        ensures this.next == null;
+        ensures this.next == null
+        ensures fresh(Rep - {this})
+        ensures Valid()
     {
         this.data := data;
         this.next := null;
+        Rep := {this};
+        len := 1;
     }
-}
-
-class Stack<T> {
-    var top: Node?<T>
 
     predicate Valid() 
         reads this
-    {
-        top == null <==> sizeHelper(top) == 0
+        reads Rep
+        decreases len
+    {   
+        this in Rep && len > 0 &&
+        (next == null ==> Rep == {this} && len == 1) &&
+            (next != null ==> next in Rep && next.Rep <= Rep && this !in next.Rep && len == next.len + 1 && next.Valid())
+    }
+}
+
+// add no cycles invariant
+// add forall requirement
+// write clients
+
+class Stack<T> {
+    var top: Node?<T>
+    var len: int // helps to prove invariants
+    ghost var Rep: set<object> // 
+
+    constructor()
+        ensures fresh(Rep - {this})
+        ensures top == null
+        ensures len == 0
+        ensures Valid()
+    {   
+        this.top := null;
+        len := 0;
+        Rep := {this};
+    }
+    
+    predicate Valid() 
+        reads this
+        reads Rep
+    {   
+        this in Rep && len >= 0 &&
+        (top == null ==> Rep == {this} && len == 0) &&
+            (top != null ==> top in Rep && top.Rep <= Rep && this !in top.Rep && len == top.len && top.Valid())
     }
 
     method push(data: T)
         requires Valid()
-        modifies this
-        ensures fresh(top)
-        ensures top.data == data
-        ensures top.next == old(top)
+        modifies Rep
+        ensures len == old(len) + 1
+        ensures top != null && top.data == data
+        ensures top.next == old(top) // forall requirement
+        ensures Rep == old(Rep) + {top} // only top element was added to the footprint
+        ensures fresh(Rep - old(Rep)) // swinging pivots requirement: any objects added to footprint are newly allocated
         ensures Valid()
     {
         var toAdd := new Node(data);
         toAdd.next := top;
+        if (top != null) {
+            toAdd.len := toAdd.len + top.len;
+        }
+
         // top.next := null; // correctly raises a verification error: may update object not in enclosing context's modifies clause
         top := toAdd;
-        
+        Rep := Rep + {top};
+        len := len + 1;
+        if (top.next == null) {
+            top.Rep := {top};
+        } else {
+            top.Rep := {top} + top.next.Rep;
+        }
+
         // top := null; // correctly raises a verification error: !fresh(top)
         // top.next := new Node(data); // correctly raises a verification error: top.next != old(top)
     } 
@@ -41,7 +90,6 @@ class Stack<T> {
         requires Valid()
         requires top != null
         ensures data == top.data
-        ensures Valid()
     {
         data := top.data;
     }
@@ -49,12 +97,16 @@ class Stack<T> {
     method pop() returns (popped: T) 
         requires Valid()
         requires top != null
-        modifies this
+        modifies Rep
+        ensures len == old(len) - 1
+        ensures Rep == old(Rep) - old({top})
         ensures top == old(top.next)
         ensures Valid()
     {
         popped := top.data;
+        Rep := Rep - {top};
         top := top.next;
+        len := len - 1;
         
         // top := new Node(popped); // correctly raises a verification error: top != old(top.next)
         // top.data := popped; // correctly raises a verification error: may update object not in enclosing context's modifies clause
@@ -63,18 +115,11 @@ class Stack<T> {
 
     method size() returns (s: int)
         requires Valid()
-        ensures s >= 0
+        ensures s == len
         ensures Valid()
     {
-        s := sizeHelper(top);
+        s := len;
     }
-
-    // unable to prove termination
-    function method sizeHelper(node: Node?<T>): int
-        ensures sizeHelper(node) >= 0
-    {
-        if node == null then 0 else 1 + sizeHelper(node.next)
-    } 
 
     method isEmpty() returns (isEmpty: bool) 
         requires Valid()
@@ -88,5 +133,19 @@ class Stack<T> {
         }
     }
 }
+
+method Test() {
+    var A := new Stack<int>();
+    assert A.len == 0;
+    var B := new Stack<int>();
+    A.push(10);
+    assert B.len == 0;
+    A.push(10);
+    assert B.len == 0;
+    assert A.len == 2;
+}
+
+
+
 
    
