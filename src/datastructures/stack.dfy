@@ -7,7 +7,7 @@ class Node<T> {
     constructor (data: T)
         ensures this.data == data
         ensures this.next == null
-        ensures fresh(Rep - {this})
+        ensures fresh(Rep)
         ensures Valid()
     {
         this.data := data;
@@ -30,7 +30,7 @@ class Node<T> {
 class Stack<T> {
     var top: Node?<T>
     var len: int // helps to prove invariants
-    ghost var Rep: set<object> // 
+    ghost var Rep: set<object>
 
     constructor()
         ensures fresh(Rep)
