@@ -27,17 +27,13 @@ class Node<T> {
     }
 }
 
-// add no cycles invariant
-// add forall requirement
-// write clients
-
 class Stack<T> {
     var top: Node?<T>
     var len: int // helps to prove invariants
     ghost var Rep: set<object> // 
 
     constructor()
-        ensures fresh(Rep - {this})
+        ensures fresh(Rep)
         ensures top == null
         ensures len == 0
         ensures Valid()
@@ -56,12 +52,13 @@ class Stack<T> {
             (top != null ==> top in Rep && top.Rep <= Rep && this !in top.Rep && len == top.len && top.Valid())
     }
 
+    // TODO: add requirement to preserve ordering for all nodes
     method push(data: T)
         requires Valid()
         modifies Rep
         ensures len == old(len) + 1
         ensures top != null && top.data == data
-        ensures top.next == old(top) // forall requirement
+        ensures top.next == old(top) 
         ensures Rep == old(Rep) + {top} // only top element was added to the footprint
         ensures fresh(Rep - old(Rep)) // swinging pivots requirement: any objects added to footprint are newly allocated
         ensures Valid()
@@ -94,6 +91,7 @@ class Stack<T> {
         data := top.data;
     }
 
+    // TODO: add requirement to preserve ordering for all nodes
     method pop() returns (popped: T) 
         requires Valid()
         requires top != null
