@@ -167,7 +167,5 @@ method swap(a: array<int>, i: int, j: int)
   ensures forall k :: 0 <= k < a.Length && k != i && k != j ==> a[k] == old(a[k])
   ensures a.Length == old(a.Length)
 {
-  var temp := a[i];
-  a[i] := a[j];
-  a[j] := temp;
+  a[i], a[j] := a[j], a[i];
 }
