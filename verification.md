@@ -28,9 +28,9 @@ A procedure declaration contains the following:
 For example:
 ```
 procedure P(ins) returns (outs);
-		requires pre;
-		modifies gs;
-		ensures Post;
+	requires pre;
+	modifies gs;
+	ensures Post;
 ```
 
 A procedure implementation contains the following:
