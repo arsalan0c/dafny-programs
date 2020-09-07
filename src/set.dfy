@@ -1,7 +1,7 @@
 // TestSet1 fails to verify
-// method TestSet1() {
-//   assert (set x: int | x in {-2, -1, 0, 1, 2} :: x * 2) == {-4, -2, 0, 2, 4};
-// }
+method TestSet1() {
+  assert (set x: int | x in {-2, -1, 0, 1, 2} :: x * 2) == {-4, -2, 0, 2, 4};
+}
 
 // if and only if operator, <==>, does not work
 function Intersection<T>(s1: set<T>, s2: set<T>): set<T>
@@ -22,6 +22,8 @@ function Union<T>(s1: set<T>, s2: set<T>): set<T>
 }
 
 
+
+
 // references: 
 // https://stackoverflow.com/questions/50195891/how-do-i-write-a-clean-function-in-dafny-to-get-the-minimum-of-a-set
 // https://stackoverflow.com/questions/49398650/dafny-what-does-no-terms-found-to-trigger-on-mean
@@ -33,10 +35,10 @@ method max(s: set<int>) returns (m: int)
     requires |s| > 0
     ensures forall k :: k in s ==> k <= m
 { 
-  var e :| e in s; // && forall k :: k in s ==> e >= k;
+  var e :| e in s;
   if (|s| >  1)  {
       var r := max(s - {e});
-      m := (if e > r then  e else r);
+      m := (if e > r then e else r);
       
       // postcondition is not met without this
       // however it gives a warning: 'no terms found to trigger on'
@@ -48,6 +50,9 @@ method max(s: set<int>) returns (m: int)
       return e;
   }
 }
+
+
+
 
 function Pick(s: set<int>): int
   requires |s| > 0

@@ -2,8 +2,9 @@
 // A = ({0, 1}, {0, 1}, delta, 0, {1})
 // delta(0, 0) = 1, delta(0, 1) = 0, delta(1, 0) = 1, delta(1, 1) = 0
 method Main() {
-    var endState := simulate([1, 0, 1, 0, 1, 0, 0, 0], [[1, 0], [1, 0]], 0, {1});
+    var endState := simulate([1, 0], [[1, 0], [1, 0]], 0, {1});
     assert endState == 1;
+    
     print "End state is: ";
     print endState;
     print "\n";
