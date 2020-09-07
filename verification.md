@@ -56,16 +56,19 @@ Stmt ::=
 	| assume Expr;
 	| call xs := P(Exprs);
 ```
-x: identifier <br/>
-xs: list of identifiers <br/>
-P: name of a declared procedure <br/>
-Expr: an expression <br/>
-Stmts: a list of statements <br/>
-Invs: loop invariant declarations, for example: `invariant Expr;` <br/>
+*x*: identifier <br/>
+*xs*: list of identifiers <br/>
+*P*: name of a declared procedure <br/>
+*Expr*: an expression <br/>
+*Stmts*: a list of statements <br/>
+*Invs*: loop invariant declarations, for example: `invariant Expr;` 
+<br/>
+<br/>
 
 Loop invariants must hold at the point immediately before each evaluation of the loop guard. <br />
 Otherwise, execution of the loop results in an irrecoverable error.
 
+<br />
 
 *havoc* takes a list of variables and assigns each one of them to an arbitrary value
 ```
@@ -366,7 +369,7 @@ free requires df[ Pre ];
 requires tr[ Pre ];
 modifies H;
 free ensures GoodHeap(H); // heap properties are ensured upon exit
-free ensures boilerplatemts [ old(H) ]; 
+free ensures boilerplate [ old(H) ]; 
 free ensures isAllocated∗[ outs ]; 
 free ensures df[ Post ];
 ensures tr[ Post ];
