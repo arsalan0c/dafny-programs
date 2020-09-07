@@ -4,9 +4,9 @@ Boogie consists of two parts, mathematical and imperative.
 
 ### Math
 ```
-type
-const
-function
+type // type declaration
+const // constant declaration
+function // first order function
 axiom
 ```
 Axioms are used to reason about the type declarations, constants and first order functions.
