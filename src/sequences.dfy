@@ -82,7 +82,8 @@ method square(a: array<int>)
   var i := 0;
   while i < a.Length 
     invariant 0 <= i <= a.Length
-    invariant forall k :: 0 <= k < i ==> a[k] == old(a[k]) * old(a[k]) 
+    invariant i == 0 && i < a.Length ==> a[i] == old(a[i]) 
+    invariant forall k :: 0 <= k < i ==> a[k] == old(a[k] * a[k])
   {
     a[i] := a[i] * a[i];
     i := i + 1;
@@ -186,8 +187,8 @@ method swap(a: array<int>, i: int, j: int)
   modifies a
   ensures a[i] == old(a[j])
   ensures a[j] == old(a[i])
+  ensures forall k :: 0 <= k < a.Length && k != i && k != j ==> a[k] == old(a[k])
+  ensures a.Length == old(a.Length)
 {
-  var temp := a[i];
-  a[i] := a[j];
-  a[j] := temp;
+  a[i], a[j] := a[j], a[i];
 }

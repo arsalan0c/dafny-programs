@@ -9,8 +9,10 @@ method last(n: nat, a: nat, b: nat, c: nat) returns (res: bool)
     ensures n > 2 ==> res == false
 {
     if (power(a, n) + power(b, n) == power(c, n)) {
-        return true;
+        res := true;
     } else {
         res := false;
     }
 }
+
+
