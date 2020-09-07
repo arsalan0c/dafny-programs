@@ -90,7 +90,8 @@ havoc x; assume x > 0;
 
 ### Semantics
 Boogie’s semantics are inductively defined in terms of weakest preconditions, on the structure of basic statements. <br />
-`wp[S, Q]`: weakest precondition of S w.r.t Q, where S is a statement and Q is a condition on the post-state of S. Q is satisfied if the execution of S terminates. Weakest preconditions express what must hold in the pre-state of S in order for Q to be satisfied.
+`wp[S, Q]` denotes the weakest precondition of S w.r.t Q, where S is a statement and Q is a condition on the post-state of S. <br />
+Q is satisfied if the execution of S terminates. Weakest preconditions express what must hold in the pre-state of S in order for Q to be satisfied.
 
 They reduce the problem of verifying a Hoare triple into proving a first-order formula.
 
