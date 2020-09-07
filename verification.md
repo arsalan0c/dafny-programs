@@ -16,28 +16,38 @@ Axioms are used to reason about the type declarations, constants and first order
 #### Expressions
 All expressions are total. Even division by zero results in some fixed value based on its arguments.
 
-Maps.
 
 
-A procedure declaration:
+A procedure declaration contains the following:
+- any number of in/out params, with in-parameters being immutable
+- a specification which contains:
+	- precondition
+	- frame
+	- postcondition
+
+For example:
 ```
-procedure P(ins) returns (outs); Spec
+procedure P(ins) returns (outs);
+		requires pre;
+		modifies gs;
+		ensures Post;
 ```
-- precondition
-- frame
-- postcondition
-- old
 
 A procedure implementation contains the following:
-- any number of in/out params, with in-parameters being immutable
 - declaration of a number of local variables
-- list of statements
+- followed by a list of statements
+
+For example:
+```
+var a: int; a := 2;
+```
 
 
 Grammar of statements:
 
 ```
-Stmt ::= xs := Exprs;
+Stmt ::= 
+	| xs := Exprs;
 	| x[Exprs] := Expr;
 	| havoc xs;
 	| if (Expr) { Stmts } else { Stmts }
@@ -55,7 +65,6 @@ Invs: loop invariant declarations, for example: `invariant Expr;` <br/>
 
 Loop invariants must hold at the point immediately before each evaluation of the loop guard. <br />
 Otherwise, execution of the loop results in an irrecoverable error.
-
 
 
 *havoc* takes a list of variables and assigns each one of them to an arbitrary value
