@@ -49,12 +49,13 @@ function Square(a: seq<int>): seq<int>
 method square(a: array<int>)
   modifies a
   ensures a[..] == Square(old(a[..]))
-{
+{ 
   var i := 0;
   while i < a.Length 
     invariant 0 <= i <= a.Length
     invariant i == 0 && i < a.Length ==> a[i] == old(a[i]) 
-    invariant forall k :: 0 <= k < i ==> a[k] == old(a[k] * a[k])
+    invariant forall k :: 0 <= k < a.Length && k >= i ==> a[k] == old(a[k])
+    invariant forall k :: 0 <= k < i ==> a[k] == old(a[k]) * old(a[k])
   {
     a[i] := a[i] * a[i];
     i := i + 1;
@@ -86,7 +87,8 @@ method map_method<T>(a: array<T>, f: ((T) -> T))
   var i := 0;
   while i < a.Length 
     invariant 0 <= i <= a.Length
-    invariant forall k :: 0 <= k < i - 1 ==> a[k] == f(old(a[k]))
+    invariant forall k :: 0 <= k < a.Length && k >= i ==> a[k] == old(a[k])
+    invariant forall k :: 0 <= k < i ==> a[k] == f(old(a[k]))
   {
     a[i] := f(a[i]);
     i := i + 1;
