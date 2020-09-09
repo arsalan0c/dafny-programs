@@ -108,14 +108,10 @@ method subtract(v1: array<real>, v2: array<real>) returns (v3: array<real>)
   ensures unchanged(v1, v2)
   ensures fresh(v3)
   ensures v3.Length == v1.Length == v2.Length
-  ensures forall k :: 0 <= k < v3.Length ==> v3[k] == v1[k] - v2[k]
+  ensures forall k :: 0 <= k < v3.Length ==> v3[k] == v1[k] + (v2[k] * -1.0)
 { 
-  var v2_neg := scale(v1, -1.0);
-  assert v2_neg.Length == v1.Length;
-  assert forall k :: 0 <= k < v2_neg.Length ==> v2_neg[k] == v1[k] * -1.0;
+  var v2_neg := scale(v2, -1.0);
   v3 := add(v1, v2_neg);
-  assert v1 == old(v1);
-  assert forall k :: 0 <= k < v3.Length ==> v3[k] == v1[k] + v2_neg[k];
 
   // var i := 0;
   // v3 := new real[v1.Length];
