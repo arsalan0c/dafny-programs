@@ -2,20 +2,40 @@
 
 Boogie consists of two parts, mathematical and imperative.
 
+Grammar of a Boogie program:
+```
+program ::= typedecl* symboldecl* axiom* vardeclstmt* proc* impl*
+```
+
 ### Math
+
+The math part consists of type, constant, function declarations and axioms.<br />
+It is used to encode the semantics of the source language.
+
+For example:
 ```
-type // type declaration
-const // constant declaration
-function // first order function
-axiom
+type Food
+const apple: Food 
+function count(Food) returns int
+axiom count(apple) == 3 // axioms are used to reason about the type declarations, constants and first order functions
 ```
-Axioms are used to reason about the type declarations, constants and first order functions.
+
+All expressions are total. Even division by zero results in some fixed value based on its arguments. <br />
+Quantifiers can be annotated with triggers. They inform the theorem prover on how to instantiate quantifiers by limiting the terms which can be picked to those that are already present in the proof context at the time of instantiation. This is since it would be mathematically sound to pick other values of the appropriate type. Therefore, triggers can be important for performance.
+
+Grammar for a trigger:
+```
+Trigger ::= { Expr+ }
+```
+
+For example:
+```
+forall x: T . {f(x)} g(f(x)) < 100 ) // directs the theorem prover to choose those x’s that occur as f(x) terms in the current proof context
+```
 
 ### Imperative
 
-#### Expressions
-All expressions are total. Even division by zero results in some fixed value based on its arguments.
-
+The imperative part consists of global variable declarations, procedure headers, and procedure implementations.
 
 
 A procedure declaration contains the following:
@@ -42,28 +62,19 @@ For example:
 var a: int; a := 2;
 ```
 
-
 Grammar of statements:
 
 ```
-Stmt ::= 
-	| xs := Exprs;
-	| x[Exprs] := Expr;
-	| havoc xs;
-	| if (Expr) { Stmts } else { Stmts }
-	| while (Expr) Invs { Stmts }
+Stmt ::= xs := Exprs;
+	| x[Exprs] := Expr; // Expr: an expression
+	| havoc xs; // xs: list of identifiers
+	| if (Expr) { Stmts } else { Stmts } // Stmts: a list of statements
+	| while (Expr) Invs { Stmts } // Invs: loop invariant declarations, for example: `invariant Expr;` 
+
 	| assert Expr;
 	| assume Expr;
-	| call xs := P(Exprs);
+	| call xs := P(Exprs); // P: name of a declared procedure
 ```
-*x*: identifier <br/>
-*xs*: list of identifiers <br/>
-*P*: name of a declared procedure <br/>
-*Expr*: an expression <br/>
-*Stmts*: a list of statements <br/>
-*Invs*: loop invariant declarations, for example: `invariant Expr;` 
-<br/>
-<br/>
 
 Loop invariants must hold at the point immediately before each evaluation of the loop guard. <br />
 Otherwise, execution of the loop results in an irrecoverable error.
@@ -81,7 +92,7 @@ Otherwise, it results an irrecoverable error.
  
 
 *assume* expresses that the verifier should only consider executions where the given condition holds.
-If it holds, the statement acts like a no-op.
+If it holds, the statement acts like a no-op. Otherwise, there are no subsequent proof obligations.
 
 The following example sets *x* to an arbitrary value but executions are only considered by the verifier for values of x that are greater than 0.
 ```
@@ -401,6 +412,43 @@ o ∈ old(tr[mts]) || ¬old(H)[o, alloc]
 ```
 
 
+#### Statements
+
+The grammar of Dafny statements is as follows:
+```
+Stmt ::= var x: Type ; // x denotes any variable identifier
+	| x := Expr ;
+	| Expr . f := Expr ;
+	| x := new T ;
+	| assert Expr ;
+	| if (Expr) { Stmts } else { Stmts }
+	| while (Expr) Invs { Stmts }
+	| foreach (x ε Expr) { x.f := Expr ; } // both x’s must be the same
+	| call xs := Expr . Id(Exprs) ; // xs is a list of distinct variables
+Inv ::= invariant Expr ;
+```
+
+A difference with Boogie is that local variables in Dafny can be declared among the statements instead of only being declared up front in the procedure body
+- after being translated according to the table below, they are moved to the beginning of the Boogie procedure
+- 
+
+
+| Dafny         | Boogie        | explanation | 
+|:-------------:|:-------------:|:-------------:|
+| var: T ;         |   x: type[T] <br /> havoc x;     |  - local variables in Dafny can be declared among the statements <br /> - in Boogie, they are moved to the beginning of the procedure <br /> - the variable is initialized with an arbitrary value using *havoc* | 
+| x := E ;         |       |
+| E.f := E ;         |       | - the expressions are checked to be well defined <br /> - a field update involves a heap update in Boogie, `H[x, f] := E ;` <br /> - the *GoodHeap* predicate has to be satisifed after the update  |
+| x := new T ;         |       |
+| assert E ;         |       |
+| if (E) { S0 ) else { S1 } | locals[S0], locals[S1] | - before translation, the guard is checked to be defined |
+| while (E) invs { S } | *prevHeap*, locals[S] | - *prevHeap* records the value of the heap upon loop entry <br /> - loop invariants are checked to be well defined and to hold <br /> - the loop guard is checked to be well defined <br /> - a condition is recorded to indicate that the current heap adheres to the method’s *modifies* clause. It is a free condition as the *modifies* clause is enforced during the translation of the loop body. |
+| foreach (x ε R) { x.f := E; } | *prevHeap* | - all expressions are checked to be defined <br /> - the enclosing method is allowed to update *x.f* for every field *x* in *R* <br /> - the fields are set to *E* by changing the heap |
+| call xs := E.M(EE) ; | | - all expressions are checked to be well defined <br /> - it is checked that the caller is allowed to update all memory locations that the callee may update |
+
+*locals* is a function returning the Boogie local variables that each Dafny statement is translated to.
+
+
+
 #### Functions
 ```
 Function ::= function Id(Params): Type FSpecs { Expr }
@@ -459,4 +507,9 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 }
 ```
 
+## References
+[This is Boogie 2](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml178.pdf)
 
+[Specification and verification of object oriented software](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml190.pdf)
+
+[Boogie](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/specsharp-krml160.pdf)
