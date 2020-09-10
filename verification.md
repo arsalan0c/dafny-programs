@@ -428,11 +428,6 @@ Stmt ::= var x: Type ; // x denotes any variable identifier
 Inv ::= invariant Expr ;
 ```
 
-A difference with Boogie is that local variables in Dafny can be declared among the statements instead of only being declared up front in the procedure body
-- after being translated according to the table below, they are moved to the beginning of the Boogie procedure
-- 
-
-
 | Dafny         | Boogie        | explanation | 
 |:-------------:|:-------------:|:-------------:|
 | var: T ;         |   x: type[T] <br /> havoc x;     |  - local variables in Dafny can be declared among the statements <br /> - in Boogie, they are moved to the beginning of the procedure <br /> - the variable is initialized with an arbitrary value using *havoc* | 
@@ -487,7 +482,7 @@ what do E and R refer to ?
 Along with the following axiom:
 ```
 // this axiom gives a precise definition of value returned by function using the precondition and body
-// other axioms depend on it to ensure consistency of the definition (how?)
+// other axioms depend on it to ensure consistency of the function definition (how?)
 // this axiom is used by methods as a precondition  
 
 axiom CanAssumeFunctionDefs =>
@@ -495,8 +490,11 @@ axiom CanAssumeFunctionDefs =>
 		GoodHeap(H) /\ this != null /\ df[R] /\ tr[R] => C.F(H, this, ins) = tr[Body]
 	)
 ```
-And the following Boogie procedure which corresponds to a proof obligation that all calls go to functions with a strictly smaller *reads* clause
+And the following Boogie procedure which corresponds to a proof obligation that all calls go to functions with a strictly smaller *reads* clause. Verifying the procedure’s implementation discharges the proof obligation.
 ```
+// this checks if the function is well defined
+// since it does not contain CanAssumeFunctionDefs, the function axioms to check if a function is well defined 
+// (what is the significance of this?)
 procedure C.F WellDefined(this: Ref, decl*[ins])
 	free requires GoodHeap(H)
 	free requires this != null /\ GoodRef[this, C.H]
@@ -505,6 +503,22 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 	assume df[R] /\ tr[R];
 	assert funcdf[body]; // funcdf is like df but for field selection and function calls which check that heap is read according to a given reads clause
 }
+```
+**A problem:**
+```
+If the function is recursive, proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
+```
+
+The following *frame axiom* is used to resolve this:
+```
+// this specifies the parts of memory the function depends on, building on the function’s reads clauses 
+(how is the axiom specifyin this?)
+axiom CanAssumeFunctionDefs =>
+	(forall H: HeapType, K: HeapType, this: Ref, decl*[ins]
+		GoodHeap(H) /\ GoodHeap(K) /\
+		(forall a o: Ref . f: Field a . o != null /\ o ε tr[rd] => H[o, f] = K[o, f]) 
+		=> C.F(H, this, ins) = C.F(K, this, ins)
+	)
 ```
 
 ## References
