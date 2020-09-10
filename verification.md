@@ -433,16 +433,15 @@ Inv ::= invariant Expr ;
 | Dafny         | Boogie        | explanation | 
 |:-------------:|:-------------:|:-------------:|
 | var: T ;         |   x: type[T] <br /> havoc x;     |  - local variables in Dafny can be declared among the statements <br /> - in Boogie, they are moved to the beginning of the procedure <br /> - the variable is initialized with an arbitrary value using *havoc* | 
-| x := E ;         |       |
-| E.f := E ;         |       | - the expressions are checked to be well defined <br /> - a field update involves a heap update in Boogie, `H[x, f] := E ;` <br /> - the *GoodHeap* predicate has to be satisifed after the update  |
-| x := new T ;         |       |
-| assert E ;         |       |
-| if (E) { S0 ) else { S1 } | locals[S0], locals[S1] | - before translation, the guard is checked to be defined |
-| while (E) invs { S } | *prevHeap*, locals[S] | - *prevHeap* records the value of the heap upon loop entry <br /> - loop invariants are checked to be well defined and to hold <br /> - the loop guard is checked to be well defined <br /> - a condition is recorded to indicate that the current heap adheres to the method’s *modifies* clause. It is a free condition as the *modifies* clause is enforced during the translation of the loop body. |
-| foreach (x ε R) { x.f := E; } | *prevHeap* | - all expressions are checked to be defined <br /> - the enclosing method is allowed to update *x.f* for every field *x* in *R* <br /> - the fields are set to *E* by changing the heap |
-| call xs := E.M(EE) ; | | - all expressions are checked to be well defined <br /> - it is checked that the caller is allowed to update all memory locations that the callee may update |
+| x := E ;         |   assert df[E]; <br /> x := tr[E];    |
+| E.f := E1 ;         | assert df[E] /\ df[E1] /\ tr[E] != null; <br /> assert CanWrite[tr[E]]; <br /> H[tr[E], C.f] := tr[E1]; <br /> assume GoodHeap(H); | - the expressions are checked to be well defined <br /> - a field update involves a heap update in Boogie, `H[x, f] := E1 ;` <br /> - the *GoodHeap* predicate has to be satisifed after the update  |
+| x := new T ;         |  havoc x; assume x != null /\ !H[x, alloc] /\ dtype(x) = class.T; <br /> H[x, alloc] := true; <br /> assume GoodHeap(H);     |
+| assert E ;         | assert df[E]; <br /> assert tr[E];      |
+| if (E) { S0 ) else { S1 } | assert df[E]; <br />if (tr[E]) { stmt[S0] } else { stmt[S1] } | - before translation, the guard is checked to be defined |
+| while (E) invs { S } | prevHeap := H; <br /><br /> while (tr[E]) <br /> invariant df[J] /\ tr[J]; <br /> invariant df[E]; <br /> free invariant boilerplate[prevHeap] | - *prevHeap* records the value of the heap upon loop entry <br /> - loop invariants are checked to be well defined and to hold <br /> - the loop guard is checked to be well defined <br /> - a condition is recorded to indicate that the current heap adheres to the method’s *modifies* clause. It is a free condition as the *modifies* clause is enforced during the translation of the loop body. |
+| call xs := E.M(EE) ; | assert df[E] /\ df*[EE] /\ tr[E] != null; <br /> assert (forall  o: Ref . o ε tr[MT[EE/args]] => CanWrite[o]); <br /> call xs := C.M(tr[E], tr*[EE]) | - all expressions are checked to be well defined <br /> - it is checked that the caller is allowed to update all memory locations that the callee may update |
 
-*locals* is a function returning the Boogie local variables that each Dafny statement is translated to.
+*stmt* is a function returning the Boogie translation of a Dafny statement.
 
 
 
