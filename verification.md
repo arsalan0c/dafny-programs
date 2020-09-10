@@ -511,7 +511,7 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 If the function is recursive, proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
 ```
 
-The following *frame axiom* is used to resolve this:
+The following *frame axiom* is used to resolve it:
 ```
 // this specifies the parts of memory the function depends on, building on the function’s reads clauses 
 (how is the axiom specifying this?)
