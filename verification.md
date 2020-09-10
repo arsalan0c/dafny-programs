@@ -304,7 +304,7 @@ There are various axioms that state properties which hold for all heaps. The fol
 
 For a class *C* with a field *f* of reference type *D*, *C.f*:
 - yields a correctly typed value
-- is closed under allocation (an allocated object only reaches other allocated objects)
+- is closed under allocation (an allocated object only reaches other allocated objects, preventing dangling pointers)
 ```
 axiom (
 	forall h: HeapType, o: Ref,
