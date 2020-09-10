@@ -512,7 +512,7 @@ If the function is recursive, proving that a heap change does not affect the fun
 The following *frame axiom* is used to resolve this:
 ```
 // this specifies the parts of memory the function depends on, building on the function’s reads clauses 
-(how is the axiom specifyin this?)
+(how is the axiom specifying this?)
 axiom CanAssumeFunctionDefs =>
 	(forall H: HeapType, K: HeapType, this: Ref, decl*[ins]
 		GoodHeap(H) /\ GoodHeap(K) /\
