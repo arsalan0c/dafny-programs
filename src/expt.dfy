@@ -17,3 +17,7 @@ method expt(b: int, n: nat) returns (res: int)
     i := i + 1;
   }
 }
+
+// source: https://www.dcc.fc.up.pt/~nam/web/resources/vfs20/DafnyQuickReference.pdf
+lemma {:induction a} distributive(x: int, a: nat, b: nat) 
+  ensures Expt(x, a) * Expt(x, b) == Expt(x, a + b)
