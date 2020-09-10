@@ -218,6 +218,13 @@ Axs => wp[Impl, true] // under the given axioms, the implementation executes cor
 ```
 
 ## Translating Dafny to Boogie
+Dafny source code is translated into Boogie to provide an intermediate representation that is then translated into logical formulas. <br />
+The intermediate representation:
+ - encodes the source program’s constructs in terms of primitive program constructs
+ - inserts properties that are guaranteed to hold in any execution of the source program
+ - describes the conditions that need to hold in order for the program to be considered correct
+
+By separating the task into two steps, generating verification conditions is simplified.
 
 Grammar of a Dafny program:
 ```
