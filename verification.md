@@ -134,6 +134,7 @@ while (E) invariant J; { S }
 Is encoded as:
 ```
 assert J; // check loop invariant holds on entry
+
 // xs denotes the syntactic assignment targets of S. They are assigned arbitrary values such that J holds.
 // the loop is fast forwarded to top of arbitrary loop iteration
 havoc xs; assume J; 
