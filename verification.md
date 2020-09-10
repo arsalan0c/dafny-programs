@@ -452,11 +452,6 @@ Param ::= Id: Type
 FSpec ::= requires Expr ; | reads Exprs ;
 ```
 
-Example:
-```
-function F(ins): T requires R; reads rd; { body } 
-```
-
 Translation of a Dafny function results in the following:
 - a Boogie function
 - a Boogie procedure
