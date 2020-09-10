@@ -21,7 +21,8 @@ axiom count(apple) == 3 // axioms are used to reason about the type declarations
 ```
 
 All expressions are total. Even division by zero results in some fixed value based on its arguments. <br />
-Quantifiers can be annotated with triggers. They inform the theorem prover on how to instantiate quantifiers by limiting the terms which can be picked to those that are already present in the proof context at the time of instantiation. This is since it would be mathematically sound to pick other values of the appropriate type. Therefore, triggers can be important for performance.
+
+Quantifiers can be annotated with triggers. They inform the theorem prover on how to instantiate quantifiers by limiting the terms which can be picked to those that are already present in the proof context at the time of instantiation. This is especially since it would be mathematically sound to pick other values of the appropriate type. Therefore, triggers can be important for performance.
 
 Grammar for a trigger:
 ```
@@ -260,7 +261,7 @@ decl[class C { <members> }] = const unique class.C: <ClassName>; decl*[ <members
 
 `type[T]` maps the Dafny type `T` into its corresponding Boogie type.
 
-Since all Dafny class types are represented by the Boogie type *Ref*, references of different *Dafny* types need to be distinguished. The translation includes a function to map each reference to its allocated type:
+Since all Dafny class types are represented by the Boogie type `Ref`, references of different *Dafny* types need to be distinguished. The translation includes a function to map each reference to its allocated type:
 ```
 function dtype(Ref) returns (<ClassName>)
 ```
@@ -279,7 +280,7 @@ The following declaration are introduced during the translation to Boogie:
 - `type HeapType = <a>[Ref, Field a]a;`
 - `var H: HeapType`
 
-*H* is the global variable which is a map.
+`H` is the global variable which is a map.
 
 Any field *f* in a class *C* is translated as follows:
 ```
