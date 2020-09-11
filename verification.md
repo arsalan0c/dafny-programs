@@ -1,6 +1,6 @@
 ## Boogie
-
-Boogie consists of two parts, mathematical and imperative.
+Boogie is a language for encoding verification conditions. 
+It consists of two parts, mathematical and imperative.
 
 Grammar of a Boogie program:
 ```
@@ -509,6 +509,26 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 	assert funcdf[body]; // funcdf is like df but for field selection and function calls which check that heap is read according to a given reads clause
 }
 ```
+
+There is a challenge if the function is recursive:
+```
+proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
+```
+
+The following *frame axiom* is used to resolve it:
+```
+// this specifies the parts of memory the function depends on, building on the function’s reads clauses 
+(how is the axiom specifying this?)
+axiom CanAssumeFunctionDefs =>
+	(forall H: HeapType, K: HeapType, this: Ref, decl*[ins]
+		GoodHeap(H) /\ GoodHeap(K) /\
+		(forall a o: Ref . f: Field a . o != null /\ o ε tr[rd] => H[o, f] = K[o, f]) 
+		=> C.F(H, this, ins) = C.F(K, this, ins)
+	)
+```
+
+## References
+[This is Boogie 2](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml178.pdf)
 
 There is a challenge if the function is recursive:
 ```
