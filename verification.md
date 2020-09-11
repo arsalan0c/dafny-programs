@@ -387,18 +387,18 @@ decl[ method M(ins) returns (outs) requires Pre; modifies mts; ensures Post; { s
 procedure C .M (this: Ref , decl∗[ ins ]) returns (decl∗[ outs ])
 free requires GoodHeap(H) && CanAssumeFunctionDefs; // use function axioms to reason about method bodies
 free requires this != null && GoodRef[this,C,H]; 
-free requires isAllocated∗[ ins ]; // ensure parameters are allocated
+free requires isAllocated[ ins ]; // ensure parameters are allocated
 free requires df[ Pre ];
 requires tr[ Pre ];
 modifies H;
 free ensures GoodHeap(H); // heap properties are ensured upon exit
 free ensures boilerplate [ old(H) ]; 
-free ensures isAllocated∗[ outs ]; 
+free ensures isAllocated[ outs ]; 
 free ensures df[ Post ];
 ensures tr[ Post ];
 {
-	varlocals∗[stmts]; 
-	stmt∗mts[stmts]
+	varlocals[stmts]; 
+	stmt[stmts]
 } 
 ```
 
