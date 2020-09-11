@@ -292,7 +292,7 @@ The following declaration are introduced during the translation to Boogie:
 
 Any field *f* in a class *C* is translated as follows:
 ```
-decl [var f: T;] = const unique C.f: Field type[T]
+decl[var f: T;] = const unique C.f: Field type[T]
 ```
 Each field in a Dafny program corresponds to a unique value of the appropriate *Field* type.
 
