@@ -31,7 +31,6 @@ For example:
 ```
 forall x: T . {f(x)} g(f(x)) < 100 ) // directs the theorem prover to choose those x’s that occur as f(x) terms in the current proof context
 ```
-
 ### Imperative
 
 The imperative part consists of global variable declarations, procedure headers, and procedure implementations.
@@ -90,7 +89,6 @@ havoc x;
 If it holds, the statement acts like a no-op. <br />
 Otherwise, it results an irrecoverable error.
  
-
 *assume* expresses that the verifier should only consider executions where the given condition holds. <br />
 If it holds, the statement acts like a no-op. <br />
 Otherwise, there are no subsequent proof obligations.
@@ -511,6 +509,25 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 	assert funcdf[body]; // funcdf is like df but for field selection and function calls which check that heap is read according to a given reads clause
 }
 ```
+**A problem:**
+```
+If the function is recursive, proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
+```
+
+The following *frame axiom* is used to resolve it:
+```
+// this specifies the parts of memory the function depends on, building on the function’s reads clauses 
+(how is the axiom specifying this?)
+axiom CanAssumeFunctionDefs =>
+	(forall H: HeapType, K: HeapType, this: Ref, decl*[ins]
+		GoodHeap(H) /\ GoodHeap(K) /\
+		(forall a o: Ref . f: Field a . o != null /\ o ε tr[rd] => H[o, f] = K[o, f]) 
+		=> C.F(H, this, ins) = C.F(K, this, ins)
+	)
+```
+
+## References
+[This is Boogie 2](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml178.pdf)
 
 There is a challenge if the function is recursive:
 ```
