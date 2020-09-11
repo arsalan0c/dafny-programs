@@ -20,8 +20,6 @@ function count(Food) returns int
 axiom count(apple) == 3 // axioms are used to reason about the type declarations, constants and first order functions
 ```
 
-All expressions are total. Even division by zero results in some fixed value based on its arguments. <br />
-
 Quantifiers can be annotated with triggers. They inform the theorem prover on how to instantiate quantifiers by limiting the terms which can be picked to those that are already present in the proof context at the time of instantiation. This is especially since it would be mathematically sound to pick other values of the appropriate type. Therefore, triggers can be important for performance.
 
 Grammar for a trigger:
@@ -33,7 +31,6 @@ For example:
 ```
 forall x: T . {f(x)} g(f(x)) < 100 ) // directs the theorem prover to choose those x’s that occur as f(x) terms in the current proof context
 ```
-
 ### Imperative
 
 The imperative part consists of global variable declarations, procedure headers, and procedure implementations.
@@ -76,6 +73,7 @@ Stmt ::= xs := Exprs;
 	| assume Expr;
 	| call xs := P(Exprs); // P: name of a declared procedure
 ```
+All expressions are total. Even division by zero results in some fixed value based on its arguments. <br />
 
 Loop invariants must hold at the point immediately before each evaluation of the loop guard. <br />
 Otherwise, execution of the loop results in an irrecoverable error.
@@ -91,9 +89,9 @@ havoc x;
 If it holds, the statement acts like a no-op. <br />
 Otherwise, it results an irrecoverable error.
  
-
-*assume* expresses that the verifier should only consider executions where the given condition holds.
-If it holds, the statement acts like a no-op. Otherwise, there are no subsequent proof obligations.
+*assume* expresses that the verifier should only consider executions where the given condition holds. <br />
+If it holds, the statement acts like a no-op. <br />
+Otherwise, there are no subsequent proof obligations.
 
 The following example sets *x* to an arbitrary value but executions are only considered by the verifier for values of x that are greater than 0.
 ```
@@ -152,9 +150,9 @@ Procedure calls are reasoned about in terms of their specification, not implemen
 The following is a procedure declaration:
 ```
 procedure P(ins) returns (outs);
-		requires pre;
-		modifies gs;
-		ensures Post;
+	requires pre;
+	modifies gs;
+	ensures Post;
 ```
 
 That is called as follows:
@@ -209,7 +207,7 @@ gs’; // a list of fresh variables, one for each in gs
 stmts’; // each statement in stmts is expanded with its semantic encoding
 assert Post’;
 ```
-For stmts’ and Post’, each occurrence of a variable from gs inside an old expression is replaced by the corresponding variable from gs. Then, every *old(E)* is replaced by E. This obtains the pre-state value of a variable if it is in the modifies clause. Otherwise, it obtains the current value of the variable. 
+For *stmts’* and *Post’*, each occurrence of a variable from *gs* inside an `old` expression is replaced by the corresponding variable from *gs*. Then, every *old(E)* is replaced by *E*. This obtains the pre-state value of a variable if it is in the modifies clause. Otherwise, it obtains the current value of the variable. 
 
 
 Let *Axs* denote the conjunction of axioms in the program. The single verification condition for the procedure is represented by:
@@ -292,7 +290,7 @@ The following declaration are introduced during the translation to Boogie:
 
 Any field *f* in a class *C* is translated as follows:
 ```
-decl [var f: T;] = const unique C.f: Field type[T]
+decl[var f: T;] = const unique C.f: Field type[T]
 ```
 Each field in a Dafny program corresponds to a unique value of the appropriate *Field* type.
 
@@ -377,7 +375,11 @@ The following contributes to the specification of a Boogie procedure:
 | requires *Pre*         |   free requires df[*Pre*] <br /> requires tr[*Pre*]     |
 | ensures *Post*      | free ensures df[*Post*] <br /> ensures tr[*Post*]     |
 
-The definedness of the pre/post conditions is marked as *free* as it is checked in a separate procedure. This is to avoid having to verify the definedness of Pre at every call site. 
+The definedness of the pre/post conditions is marked as *free* as they are checked in a separate procedure. <br />This is to avoid having to verify the definedness of *Pre* at every call site like so: 
+```
+requires df[Pre] /\ tr[Pre]
+```
+(why is post marked as free?)
 
 
 Example:
@@ -387,18 +389,18 @@ decl[ method M(ins) returns (outs) requires Pre; modifies mts; ensures Post; { s
 procedure C .M (this: Ref , decl∗[ ins ]) returns (decl∗[ outs ])
 free requires GoodHeap(H) && CanAssumeFunctionDefs; // use function axioms to reason about method bodies
 free requires this != null && GoodRef[this,C,H]; 
-free requires isAllocated∗[ ins ]; // ensure parameters are allocated
+free requires isAllocated[ ins ]; // ensure parameters are allocated
 free requires df[ Pre ];
 requires tr[ Pre ];
 modifies H;
 free ensures GoodHeap(H); // heap properties are ensured upon exit
 free ensures boilerplate [ old(H) ]; 
-free ensures isAllocated∗[ outs ]; 
+free ensures isAllocated[ outs ]; 
 free ensures df[ Post ];
 ensures tr[ Post ];
 {
-	varlocals∗[stmts]; 
-	stmt∗mts[stmts]
+	varlocals[stmts]; 
+	stmt[stmts]
 } 
 ```
 
@@ -496,7 +498,7 @@ axiom CanAssumeFunctionDefs =>
 And the following Boogie procedure which corresponds to a proof obligation that all calls go to functions with a strictly smaller *reads* clause. Verifying the procedure’s implementation discharges the proof obligation.
 ```
 // this checks if the function is well defined
-// since it does not contain CanAssumeFunctionDefs, the function axioms to check if a function is well defined 
+// since it does not contain CanAssumeFunctionDefs, the function axioms cannot be used to check if a function is well defined 
 // (what is the significance of this?)
 procedure C.F WellDefined(this: Ref, decl*[ins])
 	free requires GoodHeap(H)
@@ -510,6 +512,26 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 **A problem:**
 ```
 If the function is recursive, proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
+```
+
+The following *frame axiom* is used to resolve it:
+```
+// this specifies the parts of memory the function depends on, building on the function’s reads clauses 
+(how is the axiom specifying this?)
+axiom CanAssumeFunctionDefs =>
+	(forall H: HeapType, K: HeapType, this: Ref, decl*[ins]
+		GoodHeap(H) /\ GoodHeap(K) /\
+		(forall a o: Ref . f: Field a . o != null /\ o ε tr[rd] => H[o, f] = K[o, f]) 
+		=> C.F(H, this, ins) = C.F(K, this, ins)
+	)
+```
+
+## References
+[This is Boogie 2](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml178.pdf)
+
+There is a challenge if the function is recursive:
+```
+proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
 ```
 
 The following *frame axiom* is used to resolve it:
