@@ -377,7 +377,11 @@ The following contributes to the specification of a Boogie procedure:
 | requires *Pre*         |   free requires df[*Pre*] <br /> requires tr[*Pre*]     |
 | ensures *Post*      | free ensures df[*Post*] <br /> ensures tr[*Post*]     |
 
-The definedness of the pre/post conditions is marked as *free* as it is checked in a separate procedure. This is to avoid having to verify the definedness of Pre at every call site. 
+The definedness of the pre/post conditions is marked as *free* as they are checked in a separate procedure. <br />This is to avoid having to verify the definedness of *Pre* at every call site like so: 
+```
+requires df[Pre] /\ tr[Pre]
+```
+(why is post marked as free?)
 
 
 Example:
