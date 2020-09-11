@@ -2,20 +2,41 @@
 
 Boogie consists of two parts, mathematical and imperative.
 
+Grammar of a Boogie program:
+```
+program ::= typedecl* symboldecl* axiom* vardeclstmt* proc* impl*
+```
+
 ### Math
+
+The math part consists of type, constant, function declarations and axioms.<br />
+It is used to encode the semantics of the source language.
+
+For example:
 ```
-type // type declaration
-const // constant declaration
-function // first order function
-axiom
+type Food
+const apple: Food 
+function count(Food) returns int
+axiom count(apple) == 3 // axioms are used to reason about the type declarations, constants and first order functions
 ```
-Axioms are used to reason about the type declarations, constants and first order functions.
+
+All expressions are total. Even division by zero results in some fixed value based on its arguments. <br />
+
+Quantifiers can be annotated with triggers. They inform the theorem prover on how to instantiate quantifiers by limiting the terms which can be picked to those that are already present in the proof context at the time of instantiation. This is especially since it would be mathematically sound to pick other values of the appropriate type. Therefore, triggers can be important for performance.
+
+Grammar for a trigger:
+```
+Trigger ::= { Expr+ }
+```
+
+For example:
+```
+forall x: T . {f(x)} g(f(x)) < 100 ) // directs the theorem prover to choose those x’s that occur as f(x) terms in the current proof context
+```
 
 ### Imperative
 
-#### Expressions
-All expressions are total. Even division by zero results in some fixed value based on its arguments.
-
+The imperative part consists of global variable declarations, procedure headers, and procedure implementations.
 
 
 A procedure declaration contains the following:
@@ -42,28 +63,19 @@ For example:
 var a: int; a := 2;
 ```
 
-
 Grammar of statements:
 
 ```
-Stmt ::= 
-	| xs := Exprs;
-	| x[Exprs] := Expr;
-	| havoc xs;
-	| if (Expr) { Stmts } else { Stmts }
-	| while (Expr) Invs { Stmts }
+Stmt ::= xs := Exprs;
+	| x[Exprs] := Expr; // Expr: an expression
+	| havoc xs; // xs: list of identifiers
+	| if (Expr) { Stmts } else { Stmts } // Stmts: a list of statements
+	| while (Expr) Invs { Stmts } // Invs: loop invariant declarations, for example: `invariant Expr;` 
+
 	| assert Expr;
 	| assume Expr;
-	| call xs := P(Exprs);
+	| call xs := P(Exprs); // P: name of a declared procedure
 ```
-*x*: identifier <br/>
-*xs*: list of identifiers <br/>
-*P*: name of a declared procedure <br/>
-*Expr*: an expression <br/>
-*Stmts*: a list of statements <br/>
-*Invs*: loop invariant declarations, for example: `invariant Expr;` 
-<br/>
-<br/>
 
 Loop invariants must hold at the point immediately before each evaluation of the loop guard. <br />
 Otherwise, execution of the loop results in an irrecoverable error.
@@ -81,7 +93,7 @@ Otherwise, it results an irrecoverable error.
  
 
 *assume* expresses that the verifier should only consider executions where the given condition holds.
-If it holds, the statement acts like a no-op.
+If it holds, the statement acts like a no-op. Otherwise, there are no subsequent proof obligations.
 
 The following example sets *x* to an arbitrary value but executions are only considered by the verifier for values of x that are greater than 0.
 ```
@@ -122,6 +134,7 @@ while (E) invariant J; { S }
 Is encoded as:
 ```
 assert J; // check loop invariant holds on entry
+
 // xs denotes the syntactic assignment targets of S. They are assigned arbitrary values such that J holds.
 // the loop is fast forwarded to top of arbitrary loop iteration
 havoc xs; assume J; 
@@ -199,12 +212,19 @@ assert Post’;
 For stmts’ and Post’, each occurrence of a variable from gs inside an old expression is replaced by the corresponding variable from gs. Then, every *old(E)* is replaced by E. This obtains the pre-state value of a variable if it is in the modifies clause. Otherwise, it obtains the current value of the variable. 
 
 
-Let *Axs* denote the conjunction of axioms in the program. The verification condition for the procedure is represented by:
+Let *Axs* denote the conjunction of axioms in the program. The single verification condition for the procedure is represented by:
 ```
 Axs => wp[Impl, true] // under the given axioms, the implementation executes correctly
 ```
 
 ## Translating Dafny to Boogie
+Dafny source code is translated into Boogie to provide an intermediate representation that is then translated into logical formulas. <br />
+The intermediate representation:
+ - encodes the source program’s constructs in terms of primitive program constructs
+ - inserts properties that are guaranteed to hold in any execution of the source program
+ - describes the conditions that need to hold in order for the program to be considered correct
+
+By separating the task into two steps, generating verification conditions is simplified.
 
 Grammar of a Dafny program:
 ```
@@ -249,7 +269,7 @@ decl[class C { <members> }] = const unique class.C: <ClassName>; decl*[ <members
 
 `type[T]` maps the Dafny type `T` into its corresponding Boogie type.
 
-Since all Dafny class types are represented by the Boogie type *Ref*, references of different *Dafny* types need to be distinguished. The translation includes a function to map each reference to its allocated type:
+Since all Dafny class types are represented by the Boogie type `Ref`, references of different *Dafny* types need to be distinguished. The translation includes a function to map each reference to its allocated type:
 ```
 function dtype(Ref) returns (<ClassName>)
 ```
@@ -268,7 +288,7 @@ The following declaration are introduced during the translation to Boogie:
 - `type HeapType = <a>[Ref, Field a]a;`
 - `var H: HeapType`
 
-*H* is the global variable which is a map.
+`H` is the global variable which is a map.
 
 Any field *f* in a class *C* is translated as follows:
 ```
@@ -291,7 +311,7 @@ There are various axioms that state properties which hold for all heaps. The fol
 
 For a class *C* with a field *f* of reference type *D*, *C.f*:
 - yields a correctly typed value
-- is closed under allocation (an allocated object only reaches other allocated objects)
+- is closed under allocation (an allocated object only reaches other allocated objects, preventing dangling pointers)
 ```
 axiom (
 	forall h: HeapType, o: Ref,
@@ -401,16 +421,42 @@ o ∈ old(tr[mts]) || ¬old(H)[o, alloc]
 ```
 
 
+#### Statements
+
+The grammar of Dafny statements is as follows:
+```
+Stmt ::= var x: Type ; // x denotes any variable identifier
+	| x := Expr ;
+	| Expr . f := Expr ;
+	| x := new T ;
+	| assert Expr ;
+	| if (Expr) { Stmts } else { Stmts }
+	| while (Expr) Invs { Stmts }
+	| foreach (x ε Expr) { x.f := Expr ; } // both x’s must be the same
+	| call xs := Expr . Id(Exprs) ; // xs is a list of distinct variables
+Inv ::= invariant Expr ;
+```
+
+| Dafny         | Boogie        | explanation | 
+|:-------------:|:-------------:|:-------------:|
+| var: T ;         |   x: type[T] <br /> havoc x;     |  - local variables in Dafny can be declared among the statements <br /> - in Boogie, they are moved to the beginning of the procedure <br /> - the variable is initialized with an arbitrary value using *havoc* | 
+| x := E ;         |   assert df[E]; <br /> x := tr[E];    |
+| E.f := E1 ;         | assert df[E] /\ df[E1] /\ tr[E] != null; <br /> assert CanWrite[tr[E]]; <br /> H[tr[E], C.f] := tr[E1]; <br /> assume GoodHeap(H); | - the expressions are checked to be well defined <br /> - a field update involves a heap update in Boogie, `H[x, f] := E1 ;` <br /> - the *GoodHeap* predicate has to be satisifed after the update  |
+| x := new T ;         |  havoc x; assume x != null /\ !H[x, alloc] /\ dtype(x) = class.T; <br /> H[x, alloc] := true; <br /> assume GoodHeap(H);     |
+| assert E ;         | assert df[E]; <br /> assert tr[E];      |
+| if (E) { S0 ) else { S1 } | assert df[E]; <br />if (tr[E]) { stmt[S0] } else { stmt[S1] } | - before translation, the guard is checked to be defined |
+| while (E) invs { S } | prevHeap := H; <br /><br /> while (tr[E]) <br /> invariant df[J] /\ tr[J]; <br /> invariant df[E]; <br /> free invariant boilerplate[prevHeap] | - *prevHeap* records the value of the heap upon loop entry <br /> - loop invariants are checked to be well defined and to hold <br /> - the loop guard is checked to be well defined <br /> - a condition is recorded to indicate that the current heap adheres to the method’s *modifies* clause. It is a free condition as the *modifies* clause is enforced during the translation of the loop body. |
+| call xs := E.M(EE) ; | assert df[E] /\ df*[EE] /\ tr[E] != null; <br /> assert (forall  o: Ref . o ε tr[MT[EE/args]] => CanWrite[o]); <br /> call xs := C.M(tr[E], tr*[EE]) | - all expressions are checked to be well defined <br /> - it is checked that the caller is allowed to update all memory locations that the callee may update |
+
+*stmt* is a function returning the Boogie translation of a Dafny statement.
+
+
+
 #### Functions
 ```
 Function ::= function Id(Params): Type FSpecs { Expr }
 Param ::= Id: Type
 FSpec ::= requires Expr ; | reads Exprs ;
-```
-
-Example:
-```
-function F(ins): T requires R; reads rd; { body } 
 ```
 
 Translation of a Dafny function results in the following:
@@ -439,7 +485,7 @@ what do E and R refer to ?
 Along with the following axiom:
 ```
 // this axiom gives a precise definition of value returned by function using the precondition and body
-// other axioms depend on it to ensure consistency of the definition (how?)
+// other axioms depend on it to ensure consistency of the function definition (how?)
 // this axiom is used by methods as a precondition  
 
 axiom CanAssumeFunctionDefs =>
@@ -447,8 +493,11 @@ axiom CanAssumeFunctionDefs =>
 		GoodHeap(H) /\ this != null /\ df[R] /\ tr[R] => C.F(H, this, ins) = tr[Body]
 	)
 ```
-And the following Boogie procedure which corresponds to a proof obligation that all calls go to functions with a strictly smaller *reads* clause
+And the following Boogie procedure which corresponds to a proof obligation that all calls go to functions with a strictly smaller *reads* clause. Verifying the procedure’s implementation discharges the proof obligation.
 ```
+// this checks if the function is well defined
+// since it does not contain CanAssumeFunctionDefs, the function axioms to check if a function is well defined 
+// (what is the significance of this?)
 procedure C.F WellDefined(this: Ref, decl*[ins])
 	free requires GoodHeap(H)
 	free requires this != null /\ GoodRef[this, C.H]
@@ -458,5 +507,26 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 	assert funcdf[body]; // funcdf is like df but for field selection and function calls which check that heap is read according to a given reads clause
 }
 ```
+**A problem:**
+```
+If the function is recursive, proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
+```
 
+The following *frame axiom* is used to resolve it:
+```
+// this specifies the parts of memory the function depends on, building on the function’s reads clauses 
+(how is the axiom specifying this?)
+axiom CanAssumeFunctionDefs =>
+	(forall H: HeapType, K: HeapType, this: Ref, decl*[ins]
+		GoodHeap(H) /\ GoodHeap(K) /\
+		(forall a o: Ref . f: Field a . o != null /\ o ε tr[rd] => H[o, f] = K[o, f]) 
+		=> C.F(H, this, ins) = C.F(K, this, ins)
+	)
+```
 
+## References
+[This is Boogie 2](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml178.pdf)
+
+[Specification and verification of object oriented software](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml190.pdf)
+
+[Boogie](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/specsharp-krml160.pdf)
