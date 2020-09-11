@@ -500,7 +500,7 @@ axiom CanAssumeFunctionDefs =>
 And the following Boogie procedure which corresponds to a proof obligation that all calls go to functions with a strictly smaller *reads* clause. Verifying the procedure’s implementation discharges the proof obligation.
 ```
 // this checks if the function is well defined
-// since it does not contain CanAssumeFunctionDefs, the function axioms to check if a function is well defined 
+// since it does not contain CanAssumeFunctionDefs, the function axioms cannot be used to check if a function is well defined 
 // (what is the significance of this?)
 procedure C.F WellDefined(this: Ref, decl*[ins])
 	free requires GoodHeap(H)
