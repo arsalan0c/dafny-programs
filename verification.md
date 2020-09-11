@@ -509,9 +509,10 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 	assert funcdf[body]; // funcdf is like df but for field selection and function calls which check that heap is read according to a given reads clause
 }
 ```
-**A problem:**
+
+There is a challenge if the function is recursive:
 ```
-If the function is recursive, proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
+proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
 ```
 
 The following *frame axiom* is used to resolve it:
