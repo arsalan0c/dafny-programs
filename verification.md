@@ -209,7 +209,7 @@ gs’; // a list of fresh variables, one for each in gs
 stmts’; // each statement in stmts is expanded with its semantic encoding
 assert Post’;
 ```
-For stmts’ and Post’, each occurrence of a variable from gs inside an old expression is replaced by the corresponding variable from gs. Then, every *old(E)* is replaced by E. This obtains the pre-state value of a variable if it is in the modifies clause. Otherwise, it obtains the current value of the variable. 
+For stmts’ and Post’, each occurrence of a variable from *gs* inside an `old` expression is replaced by the corresponding variable from *gs*. Then, every *old(E)* is replaced by *E*. This obtains the pre-state value of a variable if it is in the modifies clause. Otherwise, it obtains the current value of the variable. 
 
 
 Let *Axs* denote the conjunction of axioms in the program. The single verification condition for the procedure is represented by:
