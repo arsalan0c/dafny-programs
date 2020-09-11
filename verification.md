@@ -20,8 +20,6 @@ function count(Food) returns int
 axiom count(apple) == 3 // axioms are used to reason about the type declarations, constants and first order functions
 ```
 
-All expressions are total. Even division by zero results in some fixed value based on its arguments. <br />
-
 Quantifiers can be annotated with triggers. They inform the theorem prover on how to instantiate quantifiers by limiting the terms which can be picked to those that are already present in the proof context at the time of instantiation. This is especially since it would be mathematically sound to pick other values of the appropriate type. Therefore, triggers can be important for performance.
 
 Grammar for a trigger:
@@ -76,6 +74,7 @@ Stmt ::= xs := Exprs;
 	| assume Expr;
 	| call xs := P(Exprs); // P: name of a declared procedure
 ```
+All expressions are total. Even division by zero results in some fixed value based on its arguments. <br />
 
 Loop invariants must hold at the point immediately before each evaluation of the loop guard. <br />
 Otherwise, execution of the loop results in an irrecoverable error.
@@ -92,8 +91,9 @@ If it holds, the statement acts like a no-op. <br />
 Otherwise, it results an irrecoverable error.
  
 
-*assume* expresses that the verifier should only consider executions where the given condition holds.
-If it holds, the statement acts like a no-op. Otherwise, there are no subsequent proof obligations.
+*assume* expresses that the verifier should only consider executions where the given condition holds. <br />
+If it holds, the statement acts like a no-op. <br />
+Otherwise, there are no subsequent proof obligations.
 
 The following example sets *x* to an arbitrary value but executions are only considered by the verifier for values of x that are greater than 0.
 ```
@@ -507,9 +507,10 @@ procedure C.F WellDefined(this: Ref, decl*[ins])
 	assert funcdf[body]; // funcdf is like df but for field selection and function calls which check that heap is read according to a given reads clause
 }
 ```
-**A problem:**
+
+There is a challenge if the function is recursive:
 ```
-If the function is recursive, proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
+proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
 ```
 
 The following *frame axiom* is used to resolve it:
