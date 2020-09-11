@@ -152,9 +152,9 @@ Procedure calls are reasoned about in terms of their specification, not implemen
 The following is a procedure declaration:
 ```
 procedure P(ins) returns (outs);
-		requires pre;
-		modifies gs;
-		ensures Post;
+	requires pre;
+	modifies gs;
+	ensures Post;
 ```
 
 That is called as follows:
