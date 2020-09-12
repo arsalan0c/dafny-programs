@@ -99,6 +99,7 @@ havoc x; assume x > 0;
 ```
 
 ### Semantics
+The Boogie verifier checks correctness of Boogie programs.
 Boogie’s semantics are inductively defined in terms of weakest preconditions, on the structure of basic statements. <br />
 `wp[S, Q]` denotes the weakest precondition of S w.r.t Q, where S is a statement and Q is a condition on the post-state of S. <br />
 Q is satisfied if the execution of S terminates. Weakest preconditions express what must hold in the pre-state of S in order for Q to be satisfied.
@@ -173,6 +174,8 @@ The weakest preconditions are computed from these statements.
 
 
 #### Procedure Implementations
+Procedure implementations are also verified only w.r.t their specifications, not their call sites to ensure correctness for any initial state which satisfies the preconditions.
+
 A verification condition for a procedure is generated based on:
 - postconditions of the procedure being verified
 - preconditions of procedures that are called
