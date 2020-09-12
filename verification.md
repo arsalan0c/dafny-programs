@@ -73,7 +73,7 @@ Stmt ::= xs := Exprs;
 	| assume Expr;
 	| call xs := P(Exprs); // P: name of a declared procedure
 ```
-All expressions are total. Even division by zero results in some fixed value based on its arguments. <br />
+All Boogie expressions are total. Even division by zero results in some fixed value based on its arguments. As a result, the following assertion fails: `assert (4.0 / n) * n == 4.0;`<br />
 
 Loop invariants must hold at the point immediately before each evaluation of the loop guard. <br />
 Otherwise, execution of the loop results in an irrecoverable error.
@@ -340,6 +340,7 @@ GoodRef[t, T, h] =
 *tr* is a function taking in a well defined expression that returns the value of the expression. <br />
 
 What does it mean for an expression to be well defined?
+`A well-definedness condition is an assertion on a given expression`.
 
 Expressions which refer to both the current state as well as the initial state of the method:
 
