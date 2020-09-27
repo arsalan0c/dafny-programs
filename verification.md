@@ -510,7 +510,7 @@ df[E.F(EE)] = df[E] /\ df*[EE] /\ tr[E] != null /\ df[R[EE/ins]] /\ tr[R[EE/ins]
 
 tr[E.F(EE)] = C.F(H, tr[E], tr*[EE])
 ```
-what do E and R refer to ?
+what does `E` refer to ?
 
 
 Along with the following axiom:
