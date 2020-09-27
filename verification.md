@@ -61,7 +61,6 @@ var a: int; a := 2;
 ```
 
 Grammar of statements:
-
 ```
 Stmt ::= xs := Exprs;
 	| x[Exprs] := Expr; // Expr: an expression
@@ -116,7 +115,7 @@ They reduce the problem of verifying a Hoare triple into proving a first-order f
 - `wp[m := m[jj := E];, Q] = Q[m[jj := E] / m]` (map update)
 
 #### Loops
-A loop keeps iterating as long as its guard is satisfied. As such, the iterations of a loop are abstracted and its semantics defined in terms of invariants. This is essentially verifying a supposed fix-point (?).
+A loop keeps iterating as long as its guard is satisfied. As such, the iterations of a loop are abstracted and its semantics defined in terms of invariants. This is essentially verifying a supposed fix-point.
 
 Sources of invariants:
 - properties that always hold in source language (eg. an allocated object remains allocated which is a property of Dafny)
@@ -142,16 +141,21 @@ if (E) { // if E does not hold, the loop terminates and execution continues.
 	assume false; // assume false has the result of ignoring executions that go correctly as only executions that are incorrect matter
 } else {}
 ```
+Upon loop termination the following condition should hold:
+```
+(J && !E) || (E && J && false)
+```
+`assume false` helps to ensure that this condition is satisfied since only a single loop iteration is verified.
 
 #### Procedure Calls
 Procedure calls are reasoned about in terms of their specification, not implementation because:
-- it avoids issues of fix-points (?)
+- it avoids issues of fix-points such as inferring invariants.
 - allows data abstraction
 
 The following is a procedure declaration:
 ```
 procedure P(ins) returns (outs);
-	requires pre;
+	requires Pre;
 	modifies gs;
 	ensures Post;
 ```
@@ -163,15 +167,14 @@ call xs := P(EE);
 
 With the call’s meaning encoded as:
 ```
-ins' := EE; // evaluate in-parameters
-assert Pre'; // check precondition
+ins' := EE; // introduce a fresh variable for each variable in ins and evaluate in-parameters 
+assert Pre'; // check precondition. Pre' denotes 
 gs' := gs; // remember values of old variables in modifies clause
-havoc gs, outs'; assume Post’; // set out-params and modified global variables to arbitrary values such that post condition holds
-xs := outs' // set actual out-params from formal out-params
+havoc gs, outs'; assume Post’; // set out-parameters and modified global variables to arbitrary values such that post condition holds
+xs := outs' // introduce a fresh variable for each variable in outs and set actual out-parameters from formal out-parameters
 ```
 
 The weakest preconditions are computed from these statements.
-
 
 #### Procedure Implementations
 Procedure implementations are also verified only w.r.t their specifications, not their call sites to ensure correctness for any initial state which satisfies the preconditions.
@@ -181,7 +184,7 @@ A verification condition for a procedure is generated based on:
 - preconditions of procedures that are called
 - conditions in assert statements
 
-Only *modifies* clauses are checked syntactically. <br />
+Only *modifies* clauses are checked syntactically. <br /> For pre/post conditions and proof obligations in the procedure body, verification conditions are generated.
 All global variables which are assigned in the body must be listed in the *modifies* clause. 
  
 Preconditions are assumed to be held at the start of the implementation body. <br />
@@ -193,9 +196,9 @@ They are akin to *assert* statements.
 Consider the following procedure declaration:
 ```
 procedure P(ins) returns (outs);
-		requires pre;
-		modifies gs;
-		ensures Post;
+	requires Pre;
+	modifies gs;
+	ensures Post;
 ```
 
 And the following implementation:
@@ -203,7 +206,7 @@ And the following implementation:
 var locals; stmts
 ```
 
-Whose meaning is encoded as the following, denoted by *Impl*:
+Whose meaning is encoded as the following, denoted by **Impl**:
 ``` 
 assume Pre;
 gs’; // a list of fresh variables, one for each in gs
@@ -211,7 +214,6 @@ stmts’; // each statement in stmts is expanded with its semantic encoding
 assert Post’;
 ```
 For *stmts’* and *Post’*, each occurrence of a variable from *gs* inside an `old` expression is replaced by the corresponding variable from *gs*. Then, every *old(E)* is replaced by *E*. This obtains the pre-state value of a variable if it is in the modifies clause. Otherwise, it obtains the current value of the variable. 
-
 
 Let *Axs* denote the conjunction of axioms in the program. The single verification condition for the procedure is represented by:
 ```
@@ -235,14 +237,15 @@ Member ::= Field | Method | Function
 ```
 A set of named classes make up a Dafny program.
 
-
 ### Declarations
 A translation begins with the following declarations:
 - ones that encode properties that hold for all Dafny programs
 - a single declaration for each class
 
+`decl` is a function which returns the translation of a declaration in Dafny such as classes and variables.
+
 #### Classes
-A type is declared in the translation, `type <ClassName>`
+A type for classes is introduced in the prelude as follows: `type ClassName`
 
 
 A class as a whole only contributes a single constant representing its name to the Boogie translation. <br />
@@ -253,6 +256,17 @@ decl[class C { <members> }] = const unique class.C: <ClassName>; decl*[ <members
 `class.C` is the name of the constant (Boogie allows non-alphanumeric characters for identifiers). <br />
 `decl*[ <members> ]` denotes the application of `decl` to every member of the class.
 
+For example, the translation of the following Dafny program:
+```
+class Pair {
+}
+```
+would be as follows:
+```
+type ClassName;
+const unique class.Pair: ClassName;
+```
+
 #### Types
 `type Ref;` is a nullary type constructor for references <br />
 `const null: Ref;` represents Dafny’s `null` reference <br />
@@ -261,21 +275,20 @@ decl[class C { <members> }] = const unique class.C: <ClassName>; decl*[ <members
 
 | Dafny         | Boogie        |
 |:-------------:|:-------------:|
-| bool         | bool        |
+| bool         | bool        | 
 | int      | int     |
-| *Id* | *Ref* |
+| *class identifier* | *Ref* |
 | object | *Ref*
 | set[T] | *Set* type[T] |
 | seq[T] | *Seq* type[T] |
 
 `type[T]` maps the Dafny type `T` into its corresponding Boogie type.
 
-Since all Dafny class types are represented by the Boogie type `Ref`, references of different *Dafny* types need to be distinguished. The translation includes a function to map each reference to its allocated type:
+Since all Dafny class types are represented by the Boogie type `Ref`, references of different *Dafny* classes need to be distinguished. The translation includes a function to map each reference in memory to its allocated type.
 ```
-function dtype(Ref) returns (<ClassName>)
+function dtype(Ref) returns (ClassName)
 ```
-
-The translation also needs to include operations on sets (based on set membership) and sequences.
+For instance, given `var obj: Ref`, `dtype(obj)` may return the value `Pair`.
 
 ### Memory
 Dafny includes dynamically allocated objects and references to these objects.
@@ -295,6 +308,19 @@ Any field *f* in a class *C* is translated as follows:
 ```
 decl[var f: T;] = const unique C.f: Field type[T]
 ```
+For example, the translation of the variable declarations in the following Dafny class:
+```
+class Pair {
+  var v1: int
+  var v2: int
+}
+```
+would be as follows:
+```
+const unique Pair.v1: Field int;
+const unique Pair.v2: Field int;
+```
+
 Each field in a Dafny program corresponds to a unique value of the appropriate *Field* type.
 
 The map can contain allocated as well as unallocated references. <br />
@@ -379,12 +405,12 @@ The following contributes to the specification of a Boogie procedure:
 | requires *Pre*         |   free requires df[*Pre*] <br /> requires tr[*Pre*]     |
 | ensures *Post*      | free ensures df[*Post*] <br /> ensures tr[*Post*]     |
 
-The definedness of the pre/post conditions is marked as *free* as they are checked in a separate procedure. <br />This is to avoid having to verify the definedness of *Pre* at every call site like so: 
+The definedness of the pre/post conditions is marked as *free* as they are checked in a separate procedure. 
+<br />This is to avoid having to verify the definedness of *Pre* at every call site like so: 
 ```
 requires df[Pre] /\ tr[Pre]
 ```
-(why is post marked as free?)
-
+They can be marked as free as they are guaranteed to hold across the program if they hold initially as long as all other pre/post conditions are satisfied.
 
 Example:
 ```
@@ -412,7 +438,7 @@ ensures tr[ Post ];
 decl[x: T] = x: type[T]
 ```
 ```
-isAllocated[x:T] =􏰁 GoodRef[x,T,H] if T is a reference type true otherwise
+isAllocated[x:T] =􏰁 GoodRef[x,T,H] if T is a reference type. true otherwise
 ```
 Let *prevHeap* be *old(H)*.
 ```
@@ -455,7 +481,6 @@ Inv ::= invariant Expr ;
 | call xs := E.M(EE) ; | assert df[E] /\ df*[EE] /\ tr[E] != null; <br /> assert (forall  o: Ref . o ε tr[MT[EE/args]] => CanWrite[o]); <br /> call xs := C.M(tr[E], tr*[EE]) | - all expressions are checked to be well defined <br /> - it is checked that the caller is allowed to update all memory locations that the callee may update |
 
 *stmt* is a function returning the Boogie translation of a Dafny statement.
-
 
 
 #### Functions
@@ -530,9 +555,6 @@ axiom CanAssumeFunctionDefs =>
 		=> C.F(H, this, ins) = C.F(K, this, ins)
 	)
 ```
-
-## References
-[This is Boogie 2](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml178.pdf)
 
 There is a challenge if the function is recursive:
 ```
