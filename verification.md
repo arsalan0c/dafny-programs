@@ -108,7 +108,7 @@ They reduce the problem of verifying a Hoare triple into proving a first-order f
 #### Simple Statements
 - `wp[xs := EE;, Q] = Q[EE/xs]`  (Q, the postcondition, is established if what Q says about xs holds for EE in pre-state) <br />
 For example, suppose `Q` corresponds to `xs >= 1` and `EE` corresponds to `xs + 1` such that the assignment increments the value of `xs`. <br />
-Then `wp[xs := xs + 1;, xs >= 1]` ->  `xs + 1 >= 1` -> `xs >= 0`.  <br />
+Then `wp[xs := xs + 1;, xs >= 1]` evaluates to  `xs + 1 >= 1` which evaluates to `xs >= 0`.  <br />
 This means the precondition of the assignment must satisfy the weakest precondition `xs >= 0`. <br />
 Therefore, the following implication is the verification condition generated, where `P` is the given precondition: `P -> xs >= 0`.
 
