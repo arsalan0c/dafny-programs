@@ -106,11 +106,11 @@ Q is satisfied if the execution of S terminates. Weakest preconditions express w
 They reduce the problem of verifying a Hoare triple into proving a first-order formula. An advantage of using weakest preconditions (backwards reasoning) over strongest postcondition (forwards reasoning) is that assignment statements can be handled syntactically
 
 #### Simple Statements
-- `wp[xs := EE;, Q] = Q[EE/xs]`  (Q, the postcondition, is established if what Q says about xs holds for EE in pre-state)
-For example, suppose `Q` corresponds to `xs >= 1` and `EE` corresponds to `xs + 1` such that the assignment increments the value of `xs`.
-Then `wp[xs := xs + 1;, xs >= 1]` ->  `xs + 1 >= 1` -> `xs >= 0`. This means the precondition of the assignment must satisfy the weakest precondition `xs >= 0`. 
-Therefore, the following implication is the verification condition generated, where `P` is the given precondition:
-`P -> xs >= 0`.
+- `wp[xs := EE;, Q] = Q[EE/xs]`  (Q, the postcondition, is established if what Q says about xs holds for EE in pre-state) <br />
+For example, suppose `Q` corresponds to `xs >= 1` and `EE` corresponds to `xs + 1` such that the assignment increments the value of `xs`. <br />
+Then `wp[xs := xs + 1;, xs >= 1]` ->  `xs + 1 >= 1` -> `xs >= 0`.  <br />
+This means the precondition of the assignment must satisfy the weakest precondition `xs >= 0`. <br />
+Therefore, the following implication is the verification condition generated, where `P` is the given precondition: `P -> xs >= 0`.
 
 - `wp[havoc xs;, Q] = forall xs, Q.` (values of xs are chosen to satisfy Q)
 - `wp[assert E;, Q] = E && Q`
