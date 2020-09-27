@@ -103,10 +103,15 @@ Boogie’s semantics are inductively defined in terms of weakest preconditions, 
 `wp[S, Q]` denotes the weakest precondition of S w.r.t Q, where S is a statement and Q is a condition on the post-state of S. <br />
 Q is satisfied if the execution of S terminates. Weakest preconditions express what must hold in the pre-state of S in order for Q to be satisfied.
 
-They reduce the problem of verifying a Hoare triple into proving a first-order formula.
+They reduce the problem of verifying a Hoare triple into proving a first-order formula. An advantage of using weakest preconditions (backwards reasoning) over strongest postcondition (forwards reasoning) is that assignment statements can be handled syntactically
 
 #### Simple Statements
-- `wp[xs := EE;, Q] = Q[EE/xs]`  (Q is established if what Q says about xs holds for EE in pre-state)
+- `wp[xs := EE;, Q] = Q[EE/xs]`  (Q, the postcondition, is established if what Q says about xs holds for EE in pre-state)
+For example, suppose `Q` corresponds to `xs >= 1` and `EE` corresponds to `xs + 1` such that the assignment increments the value of `xs`.
+Then `wp[xs := xs + 1;, xs >= 1]` ->  `xs + 1 >= 1` -> `xs >= 0`. This means the precondition of the assignment must satisfy the weakest precondition `xs >= 0`. 
+Therefore, the following implication is the verification condition generated, where `P` is the given precondition:
+`P -> xs >= 0`.
+
 - `wp[havoc xs;, Q] = forall xs, Q.` (values of xs are chosen to satisfy Q)
 - `wp[assert E;, Q] = E && Q`
 - `wp[assume E;, Q] = E => Q`
@@ -145,7 +150,8 @@ Upon loop termination the following condition should hold:
 ```
 (J && !E) || (E && J && false)
 ```
-`assume false` helps to ensure that this condition is satisfied since only a single loop iteration is verified.
+`assume false` helps to ensure that this condition is satisfied via the second clause since only a single loop iteration is verified.
+
 
 #### Procedure Calls
 Procedure calls are reasoned about in terms of their specification, not implementation because:
