@@ -1,3 +1,18 @@
+method Main() {
+  while false {
+    var r := 2 + 2;
+    var a := 2;
+    var c := 10 * 4 + 5 + a;
+  }
+}
+
+method MultipleReturns(x: int, y: int) returns (more: int, less: int)
+{
+  more := x + y;
+  less := x - y;
+}
+
+
 function update(s: seq<int>, i: int, v: int): seq<int>
    requires 0 <= i < |s|
    ensures update(s, i, v) == s[i := v]
@@ -50,6 +65,7 @@ method square(a: array<int>)
   modifies a
   ensures a[..] == Square(old(a[..]))
 { 
+  var test := a[1..2];
   var i := 0;
   while i < a.Length 
     invariant 0 <= i <= a.Length
@@ -80,7 +96,7 @@ function Map<T, S>(a: seq<T>, f: ((T) -> S)): seq<S>
   if |a| == 0 then [] else [f(a[0])] + Map(a[1..], f)
 }
 
-method map_method<T>(a: array<T>, f: ((T) -> T))
+method map_method<T, A>(a: array<T>, f: ((T) -> T))
   modifies a
   ensures a[..] == Map(old(a[..]), f)
 {
@@ -94,6 +110,8 @@ method map_method<T>(a: array<T>, f: ((T) -> T))
     i := i + 1;
   }
 }
+
+
 
 function Append<T>(e: T, s: seq<T>): seq<T> 
   ensures |Append(e, s)| == |s| + 1 // length should be 1 greater than the original
@@ -163,5 +181,8 @@ method swap(a: array<int>, i: int, j: int)
   ensures forall k :: 0 <= k < a.Length && k != i && k != j ==> a[k] == old(a[k])
   ensures a.Length == old(a.Length)
 {
-  a[i], a[j] := a[j], a[i];
+  while true {
+      a[i], a[j] := a[j], a[i];
+      break;
+  }
 }

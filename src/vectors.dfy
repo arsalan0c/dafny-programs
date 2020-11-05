@@ -135,20 +135,20 @@ method multiply(v1: array<real>, v2: array<real>) returns (v3: array<real>)
   ensures unchanged(v1, v2)
   ensures v3.Length == v1.Length == v2.Length
   ensures forall k :: 0 <= k < v3.Length ==> v3[k] == v1[k] * v2[k]
-{
-    var i := 0;
-    v3 := new real[v1.Length];
-    assert v3.Length == v1.Length == v2.Length;
-    while i < v1.Length
-      invariant unchanged(v1)
-      invariant unchanged(v2)
-      invariant 0 <= i <= v1.Length
-      invariant 0 <= i <= v2.Length
-      invariant forall k :: 0 <= k < i ==> v3[k] == v1[k] * v2[k]
-    {
-      v3[i] := v1[i] * v2[i];
-      i := i + 1;
-    }
+{   
+  var i := 0;
+  v3 := new real[v1.Length];
+  assert v3.Length == v1.Length == v2.Length;
+  while i < v1.Length
+    invariant unchanged(v1)
+    invariant unchanged(v2)
+    invariant 0 <= i <= v1.Length
+    invariant 0 <= i <= v2.Length
+    invariant forall k :: 0 <= k < i ==> v3[k] == v1[k] * v2[k]
+  {
+    v3[i] := v1[i] * v2[i];
+    i := i + 1;
+  }
 }
 
 function method Sum(v: array<real>, i: int): real

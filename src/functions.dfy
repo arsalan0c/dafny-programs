@@ -54,5 +54,31 @@ function twice(x: real): real
     x * 2.0
 }
 
+/*
+    McCarthy's function 91: nested recursion
+// function f91t(n: nat, k: nat): nat
+//     decreases n, 100 - n, k
+// {
+//     if k == 0 then n else if n > 100 then f91t(n - 10, k - 1) else f91t(n + 11, k + 1)
+// }
+
+// method f(n: nat) returns (res: nat) 
+//     decreases 100 - n, 100 - f(n + 11)
+// {
+//     if n > 100 {
+//         return n - 10;
+//     }
+
+//     assert n <= 100;
+//     // res := n;
+//     // while  res <= 100 {
+//     //     res := res + 11;
+//     // }
+//     var x := f(n + 11);
+//     res := f(x);
+// }
+
+
+
 
 

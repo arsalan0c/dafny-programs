@@ -14,6 +14,7 @@ method MaxTest() {
  var high := 10;
  var v := Max(low, high);
  assert v == high;  
+ 
 }
 
 function max(a: int, b: int): int
