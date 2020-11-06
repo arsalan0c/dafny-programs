@@ -29,7 +29,7 @@ Trigger ::= { Expr+ }
 
 For example:
 ```
-forall x: T . {f(x)} g(f(x)) < 100 ) // directs the theorem prover to choose those x’s that occur as f(x) terms in the current proof context
+forall x: T . {f(x)} g(f(x) < 100 ) // directs the theorem prover to choose those x’s that occur as f(x) terms in the current proof context
 ```
 ### Imperative
 
