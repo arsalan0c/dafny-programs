@@ -562,23 +562,6 @@ axiom CanAssumeFunctionDefs =>
 	)
 ```
 
-There is a challenge if the function is recursive:
-```
-proving that a heap change does not affect the function value becomes difficult (why?) (requiring induction)
-```
-
-The following *frame axiom* is used to resolve it:
-```
-// this specifies the parts of memory the function depends on, building on the function’s reads clauses 
-(how is the axiom specifying this?)
-axiom CanAssumeFunctionDefs =>
-	(forall H: HeapType, K: HeapType, this: Ref, decl*[ins]
-		GoodHeap(H) /\ GoodHeap(K) /\
-		(forall a o: Ref . f: Field a . o != null /\ o ε tr[rd] => H[o, f] = K[o, f]) 
-		=> C.F(H, this, ins) = C.F(K, this, ins)
-	)
-```
-
 ## References
 [This is Boogie 2](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/krml178.pdf)
 
